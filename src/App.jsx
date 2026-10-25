@@ -1,10 +1,12 @@
-import { useEffect, useReducer } from "react";
+import { useEffect, useReducer, useState } from "react";
 import { fetchPosts } from "./api/postsApi";
 import { postsReducer, initialState } from "./reducer/postsReducer";
 import PostList from "./components/PostList";
+import FilterForm from "./components/FilterForm";
 
 function App() {
   const [state, dispatch] = useReducer(postsReducer, initialState);
+  const [filter, setFilter] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -30,10 +32,27 @@ function App() {
     };
   }, []);
 
+  // Derived state: computed during render, not stored in state
+  const filteredPosts = state.posts.filter((post) =>
+    post.title.toLowerCase().includes(filter.toLowerCase())
+  );
+
+  let content;
+  if (state.loading) {
+    content = <p>Loading posts...</p>;
+  } else if (state.error) {
+    content = <p style={{ color: "red" }}>Error: {state.error}</p>;
+  } else if (filteredPosts.length === 0) {
+    content = <p>No posts found.</p>;
+  } else {
+    content = <PostList posts={filteredPosts} />;
+  }
+
   return (
     <div style={{ maxWidth: "700px", margin: "40px auto", fontFamily: "sans-serif" }}>
       <h1>Post Dashboard</h1>
-      <PostList posts={state.posts} />
+      <FilterForm filter={filter} onFilterChange={setFilter} />
+      {content}
     </div>
   );
 }
